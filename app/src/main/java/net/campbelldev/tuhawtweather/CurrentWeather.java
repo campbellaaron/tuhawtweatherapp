@@ -12,8 +12,9 @@ public class CurrentWeather {
     private String mIcon;
     private long mTime;
     private double mTemp;
-    private double mHumidity;
+    private double mWindSpeed;
     private double mPrecipChance;
+    private double mFeelsLikeTemp;
     private String mSummary;
     private String mTimezone;
 
@@ -73,6 +74,15 @@ public class CurrentWeather {
         return timeString;
     }
 
+    public String getFormattedDate() {
+        SimpleDateFormat dateFormatter = new SimpleDateFormat("MMM dd, yyyy");
+        dateFormatter.setTimeZone(TimeZone.getTimeZone(getTimezone()));
+        Date dateTime = new Date(getTime()*1000);
+        String dateString = dateFormatter.format(dateTime);
+
+        return dateString;
+    }
+
     public void setTime(long time) {
         mTime = time;
     }
@@ -81,16 +91,24 @@ public class CurrentWeather {
         return (int)Math.round(mTemp);
     }
 
+    public int getFeelsLikeTemp() {
+        return (int) Math.round(mFeelsLikeTemp);
+    }
+
+    public void setFeelsLikeTemp(double feelsLikeTemp) {
+        mFeelsLikeTemp = feelsLikeTemp;
+    }
+
+    public int getWindSpeed() {
+        return (int) Math.round(mWindSpeed);
+    }
+
+    public void setWindSpeed(double windSpeed) {
+        mWindSpeed = windSpeed;
+    }
+
     public void setTemp(double temp) {
         mTemp = temp;
-    }
-
-    public double getHumidity() {
-        return mHumidity;
-    }
-
-    public void setHumidity(double humidity) {
-        mHumidity = humidity;
     }
 
     public int getPrecipChance() {

@@ -1,9 +1,11 @@
 package net.campbelldev.tuhawtweather;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -16,6 +18,7 @@ import android.widget.Toast;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -34,15 +37,21 @@ public class MainActivity extends AppCompatActivity {
     public static final String TAG = MainActivity.class.getSimpleName();
 
     private CurrentWeather mCurrentWeather;
+    private DailyWeather mDailyWeather;
 
     @BindView(R.id.timeLabel) TextView mTimeLabel;
+    @BindView(R.id.dateLabel) TextView mDateLabel;
     @BindView(R.id.temperatureLabel) TextView mTemperatureLabel;
-    @BindView(R.id.humidityValue) TextView mHumidityValue;
+    @BindView(R.id.minMaxTempLabel) TextView mMinMaxTempLabel;
+    @BindView(R.id.minMaxTempValue) TextView mMinMaxTempValue;
+    @BindView(R.id.windSpeedValue) TextView mWindSpeedValue;
     @BindView(R.id.precipValue) TextView mPrecipValue;
     @BindView(R.id.summaryLabel) TextView mSummaryLabel;
     @BindView(R.id.iconImageView) ImageView mIconImageView;
+    @BindView(R.id.poweredBy) ImageView mPoweredBy;
     @BindView(R.id.refreshImageView) ImageView mRefreshImage;
     @BindView(R.id.progressBar) ProgressBar mProgressBar;
+    @BindView(R.id.feelsLikeValue) TextView mFeelsLikeValue;
     private FusedLocationProviderClient mFusedLocationClient;
 
 
@@ -56,8 +65,8 @@ public class MainActivity extends AppCompatActivity {
         mProgressBar.setVisibility(View.INVISIBLE);
 
 
-        final double userLat = 38.4179;
-        final double userLong = -82.5863;
+        final double userLat = 38.4687;
+        final double userLong = -82.5510;
 
         mRefreshImage.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -66,12 +75,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        mPoweredBy.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://darksky.net/poweredby/")));
+            }
+        });
+
         getForecast(userLat, userLong);
 
     }
 
     private void getForecast(double userLat, double userLong) {
-        String API_KEY = "aefd56c69dcc8e1a7cb5a60336300ec0";
+        final String API_KEY = "aefd56c69dcc8e1a7cb5a60336300ec0";
 
         String forecastLink = "https://api.darksky.net/forecast/" + API_KEY +
                 "/" + userLat + "," + userLong;
@@ -138,33 +154,47 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateDisplay() {
-        mTemperatureLabel.setText(mCurrentWeather.getTemp() + "");
-        mTimeLabel.setText("At " + mCurrentWeather.getFormattedTime() + " it will be");
-        mHumidityValue.setText(mCurrentWeather.getHumidity() + "");
-        mPrecipValue.setText(mCurrentWeather.getPrecipChance() + "%");
-        mSummaryLabel.setText(mCurrentWeather.getSummary());
+        String temperature = mCurrentWeather.getTemp() + "";
+        String feelsLike = mCurrentWeather.getFeelsLikeTemp() + "";
+        String time = mCurrentWeather.getFormattedTime();
+        String date = mCurrentWeather.getFormattedDate();
+        String wind = mCurrentWeather.getWindSpeed() + " mph";
+        String precip = mCurrentWeather.getPrecipChance() + "%";
+        String summary = mCurrentWeather.getSummary();
+
+        mTemperatureLabel.setText(temperature);
+        mTimeLabel.setText(time);
+        mDateLabel.setText(date);
+        mWindSpeedValue.setText(wind);
+        mFeelsLikeValue.setText(feelsLike);
+        mPrecipValue.setText(precip);
+        mSummaryLabel.setText(summary);
         Drawable drawable = getResources().getDrawable(mCurrentWeather.getIconID());
         mIconImageView.setImageDrawable(drawable);
 
     }
 
     private CurrentWeather getCurrentDetails(String jsonData) throws JSONException {
+        CurrentWeather currentWeather = new CurrentWeather();
         JSONObject forecast = new JSONObject(jsonData);
         String timezone = forecast.getString("timezone");
-        Log.i(TAG, "From JSON: " + timezone);
 
         JSONObject currently = forecast.getJSONObject("currently"); //retrieve a JSON object from a JSON object
+        JSONObject daily = forecast.getJSONObject("daily");
+        JSONArray dailyData = daily.getJSONArray("data");
+        Log.v(TAG, dailyData.toString());
 
-        CurrentWeather currentWeather = new CurrentWeather();
-        currentWeather.setHumidity(currently.getDouble("humidity"));
         currentWeather.setTime(currently.getLong("time"));
         currentWeather.setIcon(currently.getString("icon"));
         currentWeather.setPrecipChance(currently.getDouble("precipProbability"));
         currentWeather.setSummary(currently.getString("summary"));
         currentWeather.setTemp(currently.getDouble("temperature"));
+        currentWeather.setFeelsLikeTemp(currently.getDouble("apparentTemperature"));
+        currentWeather.setWindSpeed(currently.getDouble("windSpeed"));
         currentWeather.setTimezone(timezone);
 
         Log.d(TAG, currentWeather.getFormattedTime());
+        Log.d(TAG, currentWeather.getFormattedDate());
 
         return currentWeather;
     }
